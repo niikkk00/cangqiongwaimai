@@ -4,10 +4,12 @@ import com.sky.dto.DishDTO;
 import com.sky.dto.DishPageQueryDTO;
 import com.sky.result.PageResult;
 import com.sky.vo.DishVO;
+import com.sky.entity.Dish;
 
 import java.util.List;
 
 public interface DishService {
+    List<Dish> list(Long categoryId);
     /**
      * 新增菜品和口味数据
      * @param dishDTO

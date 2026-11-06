@@ -26,6 +26,11 @@ import java.util.List;
 @Service
 @Slf4j
 public class DishServiceImpl implements DishService {
+    @Override
+    public List<Dish> list(Long categoryId) {
+        return dishMapper.list(Dish.builder().categoryId(categoryId)
+                .status(StatusConstant.ENABLE).build());
+    }
     @Autowired
     private  DishMapper dishMapper;
 

@@ -4,3 +4,5 @@
 *.class
 *Test.java
 **/test/
+!sky-server/src/test/
+!sky-server/src/test/**

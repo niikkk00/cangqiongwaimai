@@ -1,6 +1,8 @@
 package com.sky.controller.admin;
 
 import com.sky.dto.DishDTO;
+import com.sky.entity.Dish;
+import io.swagger.annotations.ApiOperation;
 import com.sky.dto.DishPageQueryDTO;
 import com.sky.entity.DishFlavor;
 import com.sky.result.PageResult;
@@ -20,6 +22,12 @@ import java.util.List;
 @RequestMapping("/admin/dish")
 @Slf4j
 public class DishController {
+
+    @GetMapping("/list")
+    @ApiOperation("根据分类id查询起售菜品")
+    public Result<List<Dish>> list(@RequestParam Long categoryId) {
+        return Result.success(dishService.list(categoryId));
+    }
 
     @Autowired
     private DishService dishService;
