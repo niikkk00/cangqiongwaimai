@@ -6,3 +6,6 @@
 **/test/
 !sky-server/src/test/
 !sky-server/src/test/**
+
+# 本机凭据、历史清理脚本不提交
+/.local/
