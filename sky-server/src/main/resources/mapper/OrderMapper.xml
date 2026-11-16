@@ -7,4 +7,21 @@
         insert into orders (number,status,user_id,address_book_id,order_time,checkout_time,pay_method,pay_status,amount,remark,phone,address,user_name,consignee,cancel_reason,rejection_reason,cancel_time,estimated_delivery_time,delivery_status,delivery_time,pack_amount,tableware_number,tableware_status)
         values (#{number},#{status},#{userId},#{addressBookId},#{orderTime},#{checkoutTime},#{payMethod},#{payStatus},#{amount},#{remark},#{phone},#{address},#{userName},#{consignee},#{cancelReason},#{rejectionReason},#{cancelTime},#{estimatedDeliveryTime},#{deliveryStatus},#{deliveryTime},#{packAmount},#{tablewareNumber},#{tablewareStatus})
     </insert>
+
+    <select id="getByNumberAndUserId" resultType="com.sky.entity.Orders">
+        select id, status, pay_status
+        from orders
+        where number = #{number} and user_id = #{userId}
+    </select>
+
+    <update id="markPaid">
+        update orders
+        set status = 2,
+            pay_status = 1,
+            checkout_time = current_timestamp
+        where number = #{number}
+          and user_id = #{userId}
+          and status = 1
+          and pay_status = 0
+    </update>
 </mapper>

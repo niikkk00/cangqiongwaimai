@@ -9,6 +9,7 @@ import com.sky.entity.OrderDetail;
 import com.sky.entity.Orders;
 import com.sky.entity.ShoppingCart;
 import com.sky.exception.AddressBookBusinessException;
+import com.sky.exception.BaseException;
 import com.sky.mapper.AddressBookMapper;
 import com.sky.mapper.OrderDetailMapper;
 import com.sky.mapper.OrderMapper;
@@ -100,5 +101,32 @@ public class OrderServiceImpl implements OrderService {
                 .orderTime(orders.getOrderTime())
                 .build();
         return orderSubmitVO;
+    }
+
+    /**
+     * 订单支付
+     * @param orderNumber
+     */
+    @Override
+    public void mockPayment(String orderNumber) {
+        if (orderNumber == null || orderNumber.trim().isEmpty()) {
+            throw new BaseException("订单号不能为空");
+        }
+
+        Long userId = BaseContext.getCurrentId();
+        if (orderMapper.markPaid(orderNumber, userId) == 1) {
+            return;
+        }
+
+        Orders order = orderMapper.getByNumberAndUserId(orderNumber, userId);
+        if (order == null) {
+            throw new BaseException("订单不存在");
+        }
+
+        if (Orders.PAID.equals(order.getPayStatus())) {
+            return;
+        }
+
+        throw new BaseException("当前订单状态无法支付");
     }
 }

@@ -8,4 +8,9 @@ public interface OrderService {
      * 用户下单
      */
     OrderSubmitVO submitOrder(OrdersSubmitDTO ordersSubmitDTO);
+
+    /**
+     * 订单支付
+     */
+    void mockPayment(String orderNumber);
 }
