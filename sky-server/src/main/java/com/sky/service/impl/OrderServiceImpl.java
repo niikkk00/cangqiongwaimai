@@ -1,5 +1,6 @@
 package com.sky.service.impl;
 
+import com.alibaba.fastjson.JSONObject;
 import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
 import com.sky.constant.MessageConstant;
@@ -21,6 +22,7 @@ import com.sky.service.OrderService;
 import com.sky.vo.OrderStatisticsVO;
 import com.sky.vo.OrderSubmitVO;
 import com.sky.vo.OrderVO;
+import com.sky.websocket.WebSocketServer;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
@@ -39,6 +41,9 @@ import java.util.stream.Stream;
 @Service
 public class OrderServiceImpl implements OrderService {
 
+    private static final int NEW_ORDER_NOTIFICATION = 1;
+    private static final int ORDER_REMINDER_NOTIFICATION = 2;
+
     @Autowired
     public OrderMapper orderMapper;
 
@@ -50,6 +55,8 @@ public class OrderServiceImpl implements OrderService {
     private ShoppingCartMapper shoppingCartMapper;
     @Autowired
     private Environment environment;
+    @Autowired
+    private WebSocketServer webSocketServer;
 
     /**
      * 用户下单
@@ -124,20 +131,44 @@ public class OrderServiceImpl implements OrderService {
         }
 
         Long userId = BaseContext.getCurrentId();
-        if (orderMapper.markPaid(orderNumber, userId) == 1) {
-            return;
-        }
-
         Orders order = orderMapper.getByNumberAndUserId(orderNumber, userId);
         if (order == null) {
             throw new BaseException("订单不存在");
         }
 
-        if (Orders.PAID.equals(order.getPayStatus())) {
+        if (orderMapper.markPaid(orderNumber, userId) == 1) {
+            sendOrderNotification(NEW_ORDER_NOTIFICATION, order);
+            return;
+        }
+
+        // 并发请求可能已完成支付，重新读取当前支付状态。
+        order = orderMapper.getByNumberAndUserId(orderNumber, userId);
+        if (order != null && Orders.PAID.equals(order.getPayStatus())) {
             return;
         }
 
         throw new BaseException("当前订单状态无法支付");
+    }
+
+    @Override
+    public void reminder(Long id) {
+        Orders order = requireUserOrder(id);
+        Integer status = order.getStatus();
+        if (!Orders.PAID.equals(order.getPayStatus())
+                || !(Orders.TO_BE_CONFIRMED.equals(status)
+                || Orders.CONFIRMED.equals(status)
+                || Orders.DELIVERY_IN_PROGRESS.equals(status))) {
+            throw new OrderBusinessException(MessageConstant.ORDER_STATUS_ERROR);
+        }
+        sendOrderNotification(ORDER_REMINDER_NOTIFICATION, order);
+    }
+
+    private void sendOrderNotification(int type, Orders order) {
+        JSONObject message = new JSONObject();
+        message.put("type", type);
+        message.put("orderId", order.getId());
+        message.put("content", "订单号：" + order.getNumber());
+        webSocketServer.sendToAllClient(message.toJSONString());
     }
 
     /**

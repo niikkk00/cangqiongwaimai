@@ -17,6 +17,8 @@ public interface OrderService {
      */
     void mockPayment(String orderNumber);
 
+    void reminder(Long id);
+
     /**
      * 用户端订单分页查询
      * @param page
